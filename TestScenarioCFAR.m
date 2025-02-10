@@ -69,15 +69,6 @@ scenario.SampleTime = 0.2;
 % ---------------------------------------------------------------------------------------
 
 
-% vel_max_L = 100; % m/s
-% vel_res_L = 0.5; % m/s
-% FOV_L = 20; % deg
-% doa_max_L = FOV_L / 2; % deg
-% doa_res_L = 3.5; % deg
-
-
-
-
 %bw = 43e6; % HZ
 bw = 1.5e9
 slope = 2.5e12;
@@ -220,20 +211,6 @@ xlabel(hAxes4,'Radial Speed (m/s)');
 ylabel(hAxes4,'Range (m)');
 title(hAxes4,'Range-Doppler Image');
 
-% 正方形显示
-% rnganghandle = mesh(hAxes5,[-60 60],[0 250], zeros(2,2));
-% hAxes5.YDir = 'normal';
-% hAxes5.XDir = "reverse";
-% ylim(hAxes5,[0 250]);
-% xlim(hAxes5,[-60 60]); % m/s
-% ylabel(colorbar('peer',hAxes5),'SNR (dB)');
-% xlabel(hAxes5,'Angle of Arrival (deg)');
-% ylabel(hAxes5,'Range (m)');
-% title(hAxes5,'Range-Angle Image' );
-
-
-
-
 rngdopCFARhandle = imagesc(hAxes6,[-55 55],[0 250], zeros(2,2));
 hAxes6.YDir = 'normal';
 xlim(hAxes6,[-55 55]); % m/s
@@ -244,36 +221,9 @@ xlabel(hAxes6,'Radial Speed (m/s)');
 ylabel(hAxes6,'Range (m)');
 title(hAxes6,'Range-Doppler-CFAR');
 
-% 正方形显示
-% rngangCFARhandle = imagesc(hAxes7,[-60 60],[0 250], zeros(2,2));
-% hAxes7.YDir = 'normal';
-% hAxes7.XDir = "reverse";
-% ylim(hAxes7,[0 250]);
-% xlim(hAxes7,[-60 60]); % m/s
-% % clim(hAxes5,[10 60])
-% % ylabel(colorbar('peer',hAxes5),'SNR (dB)');
-% xlabel(hAxes7,'Angle of Arrival (deg)');
-% ylabel(hAxes7,'Range (m)');
-% title(hAxes7,'Range-Angle-CFAR' );
-
-
 
 restart(scenario);
 scenario.StopTime = Inf;
-
-% 画鸟瞰图
-
-% egoCarBEP = birdsEyePlot('Parent',hAxes3,'XLimits',[-10 500],'YLimits',[-150 150]);
-
-% % 目标的图例
-% % tgtTrackPlotter = trackPlotter(egoCarBEP,'MarkerEdgeColor','red','DisplayName','target','VelocityScaling',.5);
-% % 本车的图例
-% % egoTrackPlotter = trackPlotter(egoCarBEP,'MarkerEdgeColor','blue','DisplayName','ego','VelocityScaling',.5);
-% % 
-% egoRoadPlotter = laneBoundaryPlotter(egoCarBEP);
-% % plotTrack(egoTrackPlotter, egoVehicle.Position);
-% egoOutlinePlotter = outlinePlotter(egoCarBEP);
-% lanePlotter = laneMarkingPlotter(egoCarBEP);
 
 
 velScale = 0.1;
@@ -391,10 +341,6 @@ rngdopresp = phased.RangeDopplerResponse('PropagationSpeed',c,...
     'DopplerFFTLength',Nd,'DopplerWindow','Custom','CustomDopplerWindow',@hanning);
 
 
-% rngangresp = phased.RangeAngleResponse("SensorArray",rxArray, ...
-%     "RangeMethod","FFT","OperatingFrequency",fc,"SampleRate",bw, ...
-%     "SweepSlope",slope,"NumAngleSamples",91);
-
 beamformer = phased.PhaseShiftBeamformer('SensorArray',rxArray,...
     'PropagationSpeed',c,'OperatingFrequency',fc,'Direction',[azgrid;0 * azgrid]);
 
@@ -423,14 +369,6 @@ cfarRngDop = phased.CFARDetector2D('GuardBandSize',[nGuardRng nGuardDop],...
     db2pow(12),...
     'NoisePowerOutputPort',true,'OutputFormat','Detection index','ThresholdOutputPort',true);
 
-% cfarRngAng = phased.CFARDetector2D('GuardBandSize',[nGuardRng nGuardAng],...
-%     'TrainingBandSize',[nTrainRng nTrainAng],...
-%     'ThresholdFactor','Custom','CustomThresholdFactor', ...
-%     db2pow(20),...
-%     'NoisePowerOutputPort',true,'OutputFormat','CUT result','ThresholdOutputPort',true);
-
-
-
 % -------------------------------------------------------------------------------
 % 参数估计
 
@@ -454,16 +392,6 @@ rrestimator = phased.DopplerEstimator(...
 
 decflag = 0;
 % -------------------------------------------------------------------------------------------------------
-% snr = [];
-% NSample = 0;
-% NDetect = 0;
-% NFalse = 0;
-% 
-% expdetidx = zeros(size(idxCFAR,2),1);
-% expthre = zeros(size(idxCFAR,2),1);
-% expnpw = zeros(size(idxCFAR,2),1);
-% expfft = zeros(Nr,1);
-
 
 rngidel = [];
 velidel = [];
@@ -559,38 +487,7 @@ while advance(scenario)
     rx_sig = radar(car_path,time);
     Xframes = rx_sig;
 % ----------------------------------------------------------------------------
-% RCS估计
-    % Npath = size(car_path,2);
-    % 
-    % 
-    % nDelay = zeros(1,size(car_path,2));
-    % tx_sig = zeros(size(sig,1),Npath);
-    % for i = 1:Npath
-    %     tx_sig(:,i) = sig;
-    %     nDelay(:,i) = car_path(i).PathLength / c * fs;
-    % end
-    % 
-    % fDelay = nDelay-fix(nDelay);
-    % startidx = ceil(nDelay);
-    % endidx = size(sig,1);
-    % channel_vfd = vfd(tx_sig,fDelay);
-    % channel_sig_out = zeros(size(tx_sig));
-    % for i =1:Npath
-    %     channel_sig_out(startidx(i):endidx,i) = channel_vfd(1:endidx+1-startidx(i),i);
-    % end
-    % 
-    % pow_ratio_channel = pow2db(abs(channel_sig_out) .^ 2 ./ abs(tx_sig) .^ 2);
-    % 
-    % pow_ratio = pow2db(abs(rx_sig(:,:,1) * pinv(arrayEffect_tgt.')).^2) - pow2db(abs(sig * svv_tgt).^2)...
-    %     - pow_ratio_channel - radar.Transmitter.Gain - radar.Receiver.Gain...
-    %     - pow2db(radar.Transmitter.PeakPower) + 2 * fspl(tgtrng,lambda);
-    % 
-    % for i = 1:Npath
-    %     rcs_tgt_db = pow2db(gain2aperture(pow_ratio(:,i),lambda));
-    %     rcs_tgt_est = mean(rcs_tgt_db(rcs_tgt_db ~= -inf & rcs_tgt_db ~= inf & ~isnan(rcs_tgt_db)));
-    % end
 
-% -----------------------------------------------------------------------------------------------------------------
 % 雷达数字信号处理
     [Xrngdop,rggrid,rrgrid] = helperRangeDopplerProcessing(Xframes,radar,rngdopresp);
     Xrngdopdb = pow2db(abs(Xrngdop).^2);
@@ -647,13 +544,7 @@ while advance(scenario)
     
     if size(meas,2) > 1
         fa = fa + 1;
-    end
-    % azest = [azest meas(1)];
-    % rngest = [rngest meas(2)];
-    % velest = [velest meas(3)];
-    % rcsest = [rcsest rcs_tgt_est];
-    % azidel = [azidel tgtang(1,1)];
-    % rcsidel = [rcsidel tgtRCS_db];
+    e
 
 % ---------------------------------------------------------------------------------------------------------------------------
 % ACC算法 + 车辆位置更新
@@ -738,21 +629,7 @@ while advance(scenario)
     
     car1v0 = car1.Velocity(1);
     car1x0 = car1.Position(1);
-    % if abs(egovt - 30) <= 0.1 && decflag == 0 && time > 1 
-    %     decflag = time;
-    % end
 
-    % if decflag >0 && time -decflag >= 10
-    %     car1Acc = -1.5;
-    % else
-    %     car1Acc = 0;
-    % end
-
-    % if car1v0 <= 27
-    %     car1Acc = 1.5;
-    % else
-    %     car1Acc = 0;
-    % end
     car1Acc = 0;
     car1vt = car1v0 + car1Acc * scenario.SampleTime;
     if car1vt<=0
@@ -764,25 +641,6 @@ while advance(scenario)
     car1.Velocity(1) = car1vt;
 
 
-    % car2Acc = 0;
-    % car2v0 = car2.Velocity(1);
-    % car2x0 = car2.Position(1);
-    % car2vt = car2v0 + car2Acc * scenario.SampleTime;
-    % car2xt = car2x0 + car2v0 * scenario.SampleTime + 0.5 * car2Acc * scenario.SampleTime ^ 2;
-    % car2.Position(1) = car2xt;
-    % car2.Velocity(1) = car2vt;
-
-
-
-% %     cla(hAxes7);
-% %     text(hAxes7,0.2,0.2,"false:"+100*NFalse/NSample/size(idxCFAR,2));
-% %     text(hAxes7,0.2,0.6,"detect:"+100*NDetect/NSample);
-% 
-
-% %     if(mod(NSample,500) ==0)
-%         pfa = NFalse/NSample/size(idxCFAR,2);
-%         pd = NDetect/NSample;
-% %     end
 
 % -------------------------------------------------------------------------------------
 % % 图表更新，先注释掉
@@ -835,19 +693,11 @@ while advance(scenario)
     ylim(hAxes5,[-250 250]);
     xlim(hAxes5,[5 250]); % m/s
 
-    % 正方形显示
-    % rnganghandle.YData = rggrid;
-    % rnganghandle.XData = azgrid;
-    % rnganghandle.CData = squeeze(max(Xbmdb,[],3));
 
     rngdopCFARhandle.YData = rggrid;
     rngdopCFARhandle.XData = rrgrid;
     rngdopCFARhandle.CData = Xrngdopdb_CFAR;
 
-    % 正方形显示
-    % rngangCFARhandle.YData = rggrid;
-    % rngangCFARhandle.XData = azgrid;
-    % rngangCFARhandle.CData = Xrngangdb_CFAR;
 
     % 扇形显示
     rngangMeshCFAR = mesh(hAxes7,xgrid,ygrid,-10*ones(size(xgrid)),Xrngangdb_CFAR);
@@ -863,15 +713,6 @@ while advance(scenario)
 
     drawnow;
     % 
-    % % 
-    % % plot(hAxes6,rngidel);
-    % % hold(hAxes6,"on");
-    % % plot(hAxes6,rngest);
-    % % hold(hAxes6,"off");
-    % % plot(hAxes7,abs(velidel));
-    % % hold(hAxes7,"on");
-    % % plot(hAxes7,velest);
-    % % hold(hAxes7,"off");
 % -------------------------------------------
 % RCS估计用的
 
@@ -934,11 +775,6 @@ function plotDets(pltr,sensor,dets)
                 set(this,'XData',pos(1,:),'YData',pos(2,:),'ZData',pos(3,:));
             end
         end
-        
-        %if ismethod(pltr,'plotTrack')
-        %    plotTrack(pltr,pos(1:3,:)');
-        %else
-        %    plotDetection(pltr,pos(1:3,:)');
-        %end
+
     end
 end
